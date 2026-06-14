@@ -1,0 +1,129 @@
+name: orderflow
+
+# Infraestructura local de OrderFlow (F0). Levantar con: docker compose up -d
+# Requiere Docker Desktop. No es necesario para compilar el proyecto, solo para ejecutarlo.
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:8.0.0          # KRaft (sin ZooGuardian/ZooKeeper); ajustar al ultimo 8.x
+    container_name: orderflow-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  # Crea los topics canonicos (.v1 con 6 particiones) y sus .dlq, luego termina.
+  kafka-init:
+    image: confluentinc/cp-kafka:8.0.0
+    container_name: orderflow-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        BS=kafka:29092
+        create() { kafka-topics --bootstrap-server $$BS --create --if-not-exists --topic "$$1" --partitions "$$2" --replication-factor 1; }
+        for t in order.events.v1 order.commands.v1 payment.commands.v1 payment.events.v1 inventory.commands.v1 inventory.events.v1 notification.events.v1; do
+          create "$$t" 6
+          create "$$t.dlq" 1
+        done
+        echo "== Topics =="; kafka-topics --bootstrap-server $$BS --list
+    restart: "no"
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:8.0.0
+    container_name: orderflow-schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8085:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "kafka:29092"
+      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:16
+    container_name: orderflow-postgres
+    environment:
+      POSTGRES_USER: orderflow
+      POSTGRES_PASSWORD: orderflow
+      POSTGRES_DB: orderflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orderflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: orderflow-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # UI de Kafka para inspeccionar topics, mensajes y DLQ.
+  akhq:
+    image: tchiotludo/akhq:latest
+    container_name: orderflow-akhq
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8088:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            orderflow:
+              properties:
+                bootstrap.servers: "kafka:29092"
+              schema-registry:
+                url: "http://schema-registry:8081"
+
+  # Observabilidad todo-en-uno: Grafana + Tempo (trazas) + Prometheus/Mimir (metricas) + OTel Collector.
+  observability:
+    image: grafana/otel-lgtm:latest
+    container_name: orderflow-observability
+    ports:
+      - "3000:3000"   # Grafana UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
+volumes:
+  pgdata:

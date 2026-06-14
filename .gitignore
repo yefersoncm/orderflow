@@ -1,0 +1,29 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/.develocity/
+
+# Toolchain local (específico de cada máquina; plantilla: toolchains.xml.example)
+toolchains.xml
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs / runtime
+*.log
+logs/
+
+# Datos locales de infra
+**/data/

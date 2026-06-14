@@ -1,0 +1,14 @@
+{
+  "namespace": "com.orderflow.events",
+  "type": "record",
+  "name": "OrderCreated",
+  "doc": "Evento de dominio: una orden fue creada. Parte del catalogo canonico del SDD (5.3).",
+  "fields": [
+    { "name": "eventId",     "type": "string", "doc": "UUID del evento (clave de idempotencia)" },
+    { "name": "orderId",     "type": "string", "doc": "Identificador de la orden (key de Kafka)" },
+    { "name": "customerId",  "type": "string" },
+    { "name": "amountMinor", "type": "long",   "doc": "Importe total en unidades menores (p. ej. centimos)" },
+    { "name": "currency",    "type": "string", "doc": "Codigo ISO-4217" },
+    { "name": "createdAt",   "type": { "type": "long", "logicalType": "timestamp-millis" } }
+  ]
+}

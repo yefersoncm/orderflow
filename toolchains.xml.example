@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Plantilla de toolchain de Maven.
+  Copia este archivo a `toolchains.xml` y ajusta <jdkHome> a la ruta de tu JDK 25.
+  Uso:  mvn -t toolchains.xml verify   (o ./mvnw -t toolchains.xml verify)
+
+  Nota: `toolchains.xml` está en .gitignore por ser específico de cada máquina;
+  este `.example` es la version versionada en el repo.
+-->
+<toolchains xmlns="http://maven.apache.org/TOOLCHAINS/1.1.0">
+    <toolchain>
+        <type>jdk</type>
+        <provides>
+            <version>25</version>
+            <vendor>openjdk</vendor>
+        </provides>
+        <configuration>
+            <jdkHome>/ruta/a/tu/jdk-25</jdkHome>
+        </configuration>
+    </toolchain>
+</toolchains>

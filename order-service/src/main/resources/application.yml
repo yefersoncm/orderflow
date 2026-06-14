@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: order-service
+  threads:
+    virtual:
+      enabled: true   # Java 25 Virtual Threads (ADR-08)
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
