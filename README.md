@@ -31,7 +31,7 @@ orderflow/
 
 - **JDK 25** (cualquier distribución OpenJDK).
 - **Maven 3.9+** (o usar el wrapper `./mvnw`, incluido en el repo).
-- **Docker Desktop** (solo para levantar la infra; no hace falta para compilar).
+- **Docker Desktop** (solo para levantar la infra; no hace falta para compilar). En Windows requiere **WSL2** y reiniciar el equipo tras instalarlo.
 
 ## Build
 

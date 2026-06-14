@@ -20,7 +20,7 @@ Roadmap por fases (*vertical slices*, [SDD §8.1](SDD.md)):
 |---|---|---|
 | JDK | **25** | Fijado por toolchain durante el build |
 | Maven | 3.9+ | O usar el wrapper `./mvnw` (incluido) |
-| Docker Desktop | — | Solo para levantar la infra local |
+| Docker Desktop | — | Solo para la infra local. En Windows: requiere **WSL2** y reiniciar tras instalar. |
 
 ## Compilar
 
