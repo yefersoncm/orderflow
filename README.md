@@ -4,6 +4,7 @@ Plataforma de procesamiento de **órdenes y pagos orientada a eventos** (event-d
 
 - 📐 Especificación: [docs/SDD.md](docs/SDD.md)
 - 🧰 Stack tecnológico (versiones pinned): [docs/TECH-STACK.md](docs/TECH-STACK.md)
+- 🛠️ Guía de desarrollo (build, infra, convenciones): [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
 
 ## Stack
 
